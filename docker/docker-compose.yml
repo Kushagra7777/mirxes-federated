@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.server
+    container_name: federated_server
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+    networks:
+      - federated_network
+
+  client_a:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.client
+    container_name: federated_client_a
+    command: ["python", "client/client.py", "--hospital-id", "hospital_a", "--data-path", "data/hospital_a.csv", "--server-address", "server:8080"]
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+    depends_on:
+      - server
+    networks:
+      - federated_network
+
+  client_b:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.client
+    container_name: federated_client_b
+    command: ["python", "client/client.py", "--hospital-id", "hospital_b", "--data-path", "data/hospital_b.csv", "--server-address", "server:8080"]
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+    depends_on:
+      - server
+    networks:
+      - federated_network
+
+  client_c:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.client
+    container_name: federated_client_c
+    command: ["python", "client/client.py", "--hospital-id", "hospital_c", "--data-path", "data/hospital_c.csv", "--server-address", "server:8080"]
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+    depends_on:
+      - server
+    networks:
+      - federated_network
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: federated_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../logs:/app/logs
+    depends_on:
+      - server
+      - client_a
+      - client_b
+      - client_c
+    networks:
+      - federated_network
+
+networks:
+  federated_network:
+    driver: bridge
